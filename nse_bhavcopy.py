@@ -1,6 +1,5 @@
 #Making all necessary imports for the code
-from tkinter import FIRST
-from unittest import result
+from re import T
 from jugaad_data.nse import bhavcopy_fo_save
 import pandas as pd
 from jugaad_data.holidays import holidays
@@ -8,11 +7,14 @@ from random import randint
 import time, os
 import numpy as np
 import datetime
+import enchant
 
-date_range = pd.bdate_range(start='07/07/2022',end='07/07/2022', 
+
+
+date_range = pd.bdate_range(start='07/17/2022',end='07/17/2022', 
 						 freq='C', holidays = holidays(2022,12))
 						 
-savepath = os.path.join('D:', os.sep, 'True_Beacon/heuristics_toget_symbols')
+savepath = os.path.join('D:', os.sep, 'True_Beacon\heuristics_code')
 												  
 # start and end dates in "MM-DD-YYYY" format
 # holidays() function in (year,month) format
@@ -34,7 +36,7 @@ for dates in dates_list:
 
 
 def tb_df_format():
-	df = pd.read_csv('./2022-07-07_Portfolio Appraisal Statement Fund level.csv')
+	df = pd.read_csv('./2022-06-17_Portfolio Appraisal Statement Fund level.csv')
 	df.replace(np.nan, '', regex=True)
 	
 	# Format Column Names
@@ -82,7 +84,7 @@ def tb_df_format():
 
 
 def bhav_fut_df_format():
-	df = pd.read_csv('./fo07Jul2022bhav.csv')
+	df = pd.read_csv('./fo17Jun2022bhav.csv')
 	column_rename_mapper = {
 		'CLOSE':'market_rate',
 		'SYMBOL':'symbol_code',
@@ -115,6 +117,10 @@ def expirydate(str):
 	return temp
 
 
+def leven_score(str1,str2):
+	res = enchant.utils.levenshtein(str1.upper(), str2.upper())
+	return res
+
 
 def main():
 	# Formated df of TB1
@@ -127,12 +133,14 @@ def main():
 	# bhav_fut_df.to_csv("bhav.csv")
 	# print("BhavCopy: ",bhav_fut_df.head(2))
 
+	counter_check = 0
 	for index,column in tb_df.iterrows():
 		count = (column['market_rate'] == bhav_fut_df['market_rate']).sum()
-		if count != 1:
+		if count == 0 :
 			# expiry_check = (expirydate(column['symbol_name']) == bhav_fut_df['expiry_date']).sum()
-			print("Before Check:",index,count,column['symbol_name'])
-
+			# print("Before Check:",index,count,column['symbol_name'])
+			counter_check += 1
+	print("Result Number of rows:",len(tb_df.index)-counter_check)
 			
 		
 	
@@ -147,17 +155,54 @@ def main():
 
 	final_df = result_df[ (result_df['expiry_date'] == result_df['symbol_name'].str[-10:]) ]
 	final_df = final_df.drop_duplicates(keep=False)
-	for index,column in final_df.iterrows():
-		count = (column['market_rate'] == bhav_fut_df['market_rate']).sum()
-		if count != 1:
-			# expiry_check = (expirydate(column['symbol_name']) == bhav_fut_df['expiry_date']).sum()
-			print("After:",index,count,column['symbol_name'])
-			# new_final_df = final_df.drop(final_df[].index)
+	# for index,column in final_df.iterrows():
+	# 	count = (column['market_rate'] == bhav_fut_df['market_rate']).sum()
+	# 	if count != 1:
+	# 		# expiry_check = (expirydate(column['symbol_name']) == bhav_fut_df['expiry_date']).sum()
+	# 		print("After:",index,count,column['symbol_name'])
+	# 		new_final_df = final_df.drop(final_df[].index)
 
 
-	# final_df.to_csv("final.csv")
+	
 	# print("Final One",final_df.head(2))
+	for index,column in final_df.iterrows():
+		final_df.loc[index,'leven_score'] = leven_score(column['symbol_code'],column['symbol_name'])
+	# final_df.to_csv("final.csv")
+	# print("Length",len(final_df.index))
+
+
+
+	row_iterator = final_df.iterrows()
+	next_one = next(row_iterator)
+	count = 0
+	for index,column in final_df.iterrows():
+		count += 1
+		if count >= len(final_df.index):
+			break
+		next_one = next(row_iterator)
+		# print("NExt one:",column['symbol_name'],next_one[1]['symbol_name'])
+		if (column['symbol_name'] == next_one[1]['symbol_name']) and (column['market_rate'] == next_one[1]['market_rate']) and (column['average_unit_cost'] == next_one[1]['average_unit_cost']):
+			if(column['leven_score'] > next_one[1]['leven_score']):
+				# print("Drop",index)
+				final_df = final_df.drop(index)
+			else:
+				final_df = final_df.drop(index+1)
+				# print("Drop:",index+1)
+
+
+
+
+
+	# final_df = final_df.drop(final_df[ ((final_df['symbol_name'] == final_df['symbol_name'].shift(-1)) 
+	# & (final_df['symbol_code'] != final_df['symbol_code'].shift(-1))
+	
+	# & (final_df['leven_score'] > final_df['leven_score'].shift(-1)))].index)
+	print(final_df.head(2))
+	# final_df = final_df.drop('leven_score',inplace=True,axis=1)
 	print("After Dropping Duplicates:",len(final_df.index))
+	final_df.to_csv("thisone.csv")
+	# final_df.to_csv("final.csv")
+	# print(final_df.head(2))
 	
 	
 
