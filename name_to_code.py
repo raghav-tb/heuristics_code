@@ -11,7 +11,7 @@ import enchant
 
 
 
-date_range = pd.bdate_range(start='07/17/2022',end='07/17/2022', 
+date_range = pd.bdate_range(start='06/17/2022',end='06/17/2022', 
 						 freq='C', holidays = holidays(2022,12))
 						 
 savepath = os.path.join('D:', os.sep, 'True_Beacon\heuristics_code')
