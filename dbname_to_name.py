@@ -122,7 +122,8 @@ def main():
         store_symbol_code = ''
         for i,col in isin_df.iterrows():
             live_score = leven_score(column['symbol_name'][:-13],col['symbol_name'])
-            print(column['symbol_name'][:-13],col['symbol_name'])
+            # print(column['symbol_name'][:-13],col['symbol_name'])
+            live_score -= abs(len(column['symbol_name'][:-13]) - len(col['symbol_name']))
             if(live_score < min_leven):
                 min_leven = live_score
                 store_index = index
@@ -133,7 +134,7 @@ def main():
         input_df.loc[index,'symbol_code'] = store_symbol_code
 
     # print("SymbolCode added:",input_df.head(2))
-    # input_df.to_csv("dbname_to_name.csv")
+    input_df.to_csv("dbname_to_name.csv")
     
     
 

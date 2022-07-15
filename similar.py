@@ -1,8 +1,8 @@
 import enchant
 
-string1 = "Abbott India"
-string2 = "ABBOTINDIA"
-string3 = "BANKINDIA"
+string1 = "Biocon Ltd"
+string2 = "Biocon Limited"
+string3 = "Bigbloc Construction Limited"
 
 
 # string4 = "Apollo Hospitals Enterprise"
